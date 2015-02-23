@@ -1,0 +1,132 @@
+#!/bin/ksh
+#
+# for production
+    cd /home/prod/4gl
+ 
+    LOG=../logs/swxeom.log
+    cat /dev/null > $LOG
+#   NOTIFY=" barry@tranact.com \
+#            bj@tranact.com "
+   NOTIFY=" barry@tranact.com \
+            bj@tranact.com \
+            scott@tranact.com "            
+
+# clear last month's files
+   rm ../data/mth_cards_*.txt | tee -a $LOG
+   rm ../data/unsold*.txt | tee -a $LOG
+   rm ../data/card_list*.txt | tee -a $LOG
+   rm ../data/fee_sched*.txt | tee -a $LOG
+   rm ../data/top_50.txt | tee -a $LOG
+   rm ../logs/bill_inact.log | tee -a $LOG
+   rm ../logs/inact_refd.log | tee -a $LOG
+   rm ../data/inactive_rpt.txt | tee -a $LOG
+   rm ../data/inactive_errs.txt | tee -a $LOG
+   rm ../data/inactrefd_rpt.txt | tee -a $LOG
+   rm ../data/inactrefd_errs.txt | tee -a $LOG
+
+################################################################
+## Begin swxeom script 
+   echo -e "\n $0 started at: `date`" | tee -a $LOG
+   echo " using database $DBNAME" | tee -a $LOG
+ # create list of linux users
+   /scripts/mygetusers3.sh | tee -a $LOG
+################################################################
+
+##################################################################
+## Begin mth_cards.4gl
+   echo -e "\n mth_cards.4gl Began at `date`"  | tee -a $LOG
+ 
+   fglgo mth_cards 2>&1| tee -a $LOG
+   EC1=$?
+   echo " mth_cards.4gl Ended at `date`"  | tee -a $LOG
+## End mth_cards.4gl
+##################################################################
+
+##################################################################
+## Begin unsold.4gl
+   echo -e "\n unsold.4gl Began at `date`"  | tee -a $LOG
+ 
+   fglgo unsold 2>&1| tee -a $LOG
+   EC2=$?
+   echo " unsold.4gl Ended at `date`"  | tee -a $LOG
+## End unsold.4gl
+##################################################################
+
+##################################################################
+## Begin card_list.4gl
+   echo -e "\n card_list.4gl Began at `date`"  | tee -a $LOG
+ 
+   fglgo card_list 2>&1| tee -a $LOG
+   EC3=$?
+   echo " card_list.4gl Ended at `date`"  | tee -a $LOG
+## End card_list.4gl
+##################################################################
+
+##################################################################
+## Begin fee_sched.4gl
+   echo -e "\n fee_sched.4gl Began at `date`"  | tee -a $LOG
+ 
+   fglgo fee_sched 2>&1| tee -a $LOG
+   EC4=$?
+   echo " fee_sched.4gl Ended at `date`"  | tee -a $LOG
+## End fee_sched.4gl
+##################################################################
+
+##################################################################
+## Begin top_50.4gl
+   echo -e "\n top_50.4gl Began at `date`"  | tee -a $LOG
+ 
+   fglgo top_50 2>&1| tee -a $LOG
+   EC5=$?
+   echo " top_50.4gl Ended at `date`"  | tee -a $LOG
+## End top_50.4gl
+##################################################################
+
+##################################################################
+## Begin bill_inact.4gl 
+   echo -e "\n bill_inact.4gl started at `date`"  | tee -a $LOG
+   fglgo bill_inact $1 2>&1| tee -a $LOG
+   EC6=$?
+   echo " bill_inact.4gl ended at `date`"  | tee -a $LOG
+## End bill_inact.4gl
+##################################################################
+
+##################################################################
+## Begin inact_refd.4gl
+   echo -e "\n inact_refd.4gl Began at `date`"  | tee -a $LOG
+ 
+   fglgo inact_refd $1 2>&1| tee -a $LOG
+   EC7=$?
+   echo " inact_refd.sh Ended at `date`"  | tee -a $LOG
+## End inact_refd.4gl
+##################################################################
+
+EC99=$(($EC1+$EC2+$EC3+$EC4+$EC5+$EC6+$EC7))
+##################################################################
+if [ $EC99 = 0 ]; then
+   echo -e "SWXEOM GOOD \n" | tee -a ${LOG}
+   PASSFAIL="GOOD"
+else
+   echo -e "SWXEOM FAILED \n" | tee -a ${LOG}
+   PASSFAIL="FAILED"
+fi
+    
+   echo -e "\n $0 ended at: `date`  "  | tee -a $LOG 
+    echo " swxeom script ended at: `date`  " | tee -a $LOG   
+    ../scripts/tfr-swxeom.sh
+EC=$?
+if [ $EC = 0 ]; then
+   echo -e "FTP GOOD \n" | tee -a ${LOG}
+   FTPFAIL="GOOD"
+else
+   echo -e "FTP FAILED \n" | tee -a ${LOG}
+   FTPFAIL="FAILED"
+fi
+  SUBJ="swxeom ${PASSFAIL} ftp ${FTPFAIL} `hostname`"
+
+#   cat $LOG | awk 'sub("$", "\r")' | \
+   mail -s "${SUBJ} " ${NOTIFY} < ${LOG}
+## End swxeom script 
+##################################################################
+
+exit

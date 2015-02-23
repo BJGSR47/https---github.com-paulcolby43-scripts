@@ -1,0 +1,213 @@
+#!/bin/sh
+#
+# for production
+ 
+    cd /home/prod/4gl
+    LOG=../logs/swxeod1.log
+    cat /dev/null > $LOG
+#   NOTIFY=" barry@tranact.com \
+#            bj@tranact.com "
+   NOTIFY=" barry@tranact.com \
+            bj@tranact.com \
+            scott@tranact.com "            
+
+# clear yesterday's files
+   rm ../logs/bill_newcd.log | tee -a  $LOG
+   rm ../data/merch_cred.txt | tee -a $Log
+   rm ../data/daily_mcc.txt | tee -a  $LOG
+   rm ../data/uncommon_voids.txt | tee -a  $LOG
+   rm ../data/load_cash_sum.txt | tee -a  $LOG
+   rm ../data/pre_expire.txt | tee -a  $LOG
+   rm ../logs/bill_newcd.log | tee -a  $LOG
+   rm ../data/newcard_rpt.txt | tee -a  $LOG
+   rm ../data/newcard_errs.txt | tee -a  $LOG
+   rm ../data/newcard_fees.txt | tee -a  $LOG
+   rm ../data/big_bals.txt | tee -a $Log
+   rm ../data/send_msg_err.txt | tee -a  $LOG
+   rm ../data/send_msg1_err.txt | tee -a  $LOG
+   rm ../data/dly_bals*.txt | tee -a  $LOG
+   rm ../data/neg_bals.txt | tee -a  $LOG
+   rm ../data/svc_chg.txt | tee -a  $LOG
+   rm ../data/alerts_err.txt | tee -a $Log
+################################################################
+## Begin swxeod1 script 
+   echo -e "\n $0 started at: `date`" | tee -a  $LOG
+   echo " using database $DBNAME" | tee -a $LOG
+################################################################
+
+##################################################################
+## Begin merch_cred.4gl 
+   echo -e "\n merch_cred.4gl Began at `date`"  | tee -a $LOG
+        
+   fglgo merch_cred $1 2>&1| tee -a $LOG
+   EC1=$?
+
+   echo " merch_cred.4gl Ended at `date`"  | tee -a $LOG
+ 
+## End merch_cred.4gl
+################################################################## 
+
+##################################################################
+## Begin daily_mcc.4gl 
+   echo -e "\n daily_mcc.4gl Began at `date`"  | tee -a $LOG
+        
+   fglgo daily_mcc $1 2>&1| tee -a $LOG
+   EC2=$?
+
+   echo " daily_mcc.4gl Ended at `date`"  | tee -a $LOG
+ 
+## End daily_mcc.4gl
+################################################################## 
+
+##################################################################
+## Begin uncomm_void.4gl
+   echo -e "\n uncomm_void.4gl Began at `date`"  | tee -a $LOG
+ 
+   fglgo uncomm_void $1 2>&1 | tee -a $LOG
+   EC3=$?
+ 
+   echo " uncomm_void.4gl Ended at `date`"  | tee -a $LOG
+## End uncomm_void.4gl
+##################################################################
+
+##################################################################
+## Begin load_cash.4gl
+   echo -e "\n load_cash.4gl Began at `date`"  | tee -a $LOG
+ 
+   fglgo load_cash $1 2>&1 | tee -a $LOG
+   EC4=$?
+ 
+   echo " load_cash.4gl Ended at `date`"  | tee -a $LOG
+## End load_cash.4gl
+##################################################################
+
+##################################################################
+## Begin pre_expire.4gl 
+   echo -e "\n pre_expire.4gl Began at `date` "   | tee -a $LOG
+   
+   fglgo pre_expire $1 2>&1 | tee -a $LOG 
+   EC5=$?
+   
+   echo " pre_expire.4gl Ended at `date`"  | tee -a $LOG
+## End pre_expire.4gl   
+##################################################################
+
+##################################################################
+## Begin bill_newcd.4gl 
+   echo -e "\n bill_newcd.4gl Began at `date` "   | tee -a $LOG
+   
+   fglgo bill_newcd $1 2>&1  | tee -a $LOG 
+   EC6=$?
+   
+   echo " bill_newcd.4gl Ended at `date`"  | tee -a $LOG
+## End bill_newcd.4gl   
+##################################################################
+
+##################################################################
+## Begin big_bals.4gl 
+   echo -e "\n big_bals.4gl Began at `date`"  | tee -a $LOG
+        
+   fglgo big_bals 2>&1| tee -a $LOG
+   EC7=$?
+
+   echo " big_bals.4gl Ended at `date`"  | tee -a $LOG
+ 
+## End big_bals.4gl
+##################################################################
+
+##################################################################
+## Begin send_rpt.4gl 
+   echo -e "\n send_rpt.4gl Began at `date` "   | tee -a $LOG
+   
+   fglgo send_rpt 2>&1 | tee -a $LOG 
+   EC8=$?
+   
+   echo " send_rpt.4gl Ended at `date`"  | tee -a $LOG
+## End send_rpt.4gl   
+##################################################################
+
+##################################################################
+## Begin send_rpt1.4gl 
+   echo -e "\n send_rpt1.4gl Began at `date` "   | tee -a $LOG
+   
+   fglgo send_rpt1 2>&1 | tee -a $LOG 
+   EC9=$?
+   
+   echo " send_rpt1.4gl Ended at `date`"  | tee -a $LOG
+## End send_rpt1.4gl   
+##################################################################
+
+##################################################################
+## Begin dly_bals.4gl 
+   echo -e "\n dly_bals.4gl Began at `date` "   | tee -a $LOG
+   
+   fglgo dly_bals 2>&1| tee -a $LOG 
+   EC10=$?
+   
+   echo " dly_bals.4gl Ended at `date`"  | tee -a $LOG
+## End dly_bals.4gl   
+##################################################################
+
+##################################################################
+## Begin neg_bals.4gl 
+   echo -e "\n neg_bals.4gl started at `date`"  | tee -a $LOG
+   
+   fglgo neg_bals 2>&1| tee -a $LOG 
+   EC11=$?
+
+   echo " neg_bals.4gl ended at `date`"  | tee -a $LOG
+## End neg_bals.4gl  
+##################################################################
+
+##################################################################
+## Begin svc_chgs.4gl 
+   echo -e "\n svc_chgs.4gl started at `date`"  | tee -a $LOG
+   
+   fglgo svc_chgs $1 2>&1| tee -a $LOG 
+   EC12=$?
+
+   echo " svc_chgs.4gl ended at `date`"  | tee -a $LOG
+## End svc_chgs.4gl  
+
+##################################################################
+## Begin alerts_rpt.4gl 
+   echo -e "\n alerts_rpt.4gl Began at `date` "   | tee -a $LOG
+   
+   fglgo alerts_rpt 2>&1 | tee -a $LOG 
+   EC13=$?
+   
+   echo " alerts_rpt.4gl Ended at `date`"  | tee -a $LOG
+## End alerts_rpt.4gl   
+##################################################################
+
+##################################################################
+EC99=$(($EC1+$EC2+$EC3+$EC4+$EC5+$EC6+$EC7+$EC8+$EC9+$EC10+$EC11+$EC12+$EC13))
+##################################################################
+if [ $EC99 = 0 ]; then
+   echo -e "swxeod1 GOOD \n" | tee -a ${LOG}
+   PASSFAIL="GOOD"
+else
+   echo -e "swxeod1 FAILED \n" | tee -a ${LOG}
+   PASSFAIL="FAILED"
+fi
+    
+   echo -e "\n $0 ended at: `date`  "  | tee -a $LOG 
+    echo " swxeod1 script ended at: `date`  " | tee -a $LOG
+    # transfer files to report server
+    ../scripts/tfr-swxeod1.sh
+EC=$?
+if [ $EC = 0 ]; then
+   echo -e "FTP GOOD \n" | tee -a ${LOG}
+   FTPFAIL="GOOD"
+else
+   echo -e "FTP FAILED \n" | tee -a ${LOG}
+   FTPFAIL="FAILED"
+fi
+  SUBJ="swxeod1 ${PASSFAIL} ftp ${FTPFAIL} `hostname`"
+
+#   cat $LOG | awk 'sub("$", "\r")' | \
+   mail -s "${SUBJ}" ${NOTIFY} < ${LOG}
+## End swxeod1 script 
+##################################################################
+
+exit

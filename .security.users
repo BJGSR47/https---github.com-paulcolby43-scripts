@@ -1,0 +1,6 @@
+# Bourne shell commands!
+# Security Information for the Reports Server
+
+FTPHOST=10.232.192.13 ; export FTPHOST
+FTPUSER=reports ; export FTPUSER
+FTPPASS=cjarpbn6 ; export FTPPASS

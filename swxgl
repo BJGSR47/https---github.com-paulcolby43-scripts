@@ -1,0 +1,127 @@
+#!/bin/sh
+#
+# for production
+ 
+    cd /home/prod/4gl
+    LOG=../logs/swxgl.log
+    cat /dev/null > $LOG
+#   NOTIFY=" barry@tranact.com \
+#            bj@tranact.com "
+   NOTIFY=" barry@tranact.com \
+            scott@tranact.com \
+            bj@tranact.com "            
+
+# clear yesterday's files
+   rm ../logs/logext.log | tee -a  $LOG
+   rm ../logs/fee_split.log | tee -a  $LOG
+   rm ../data/gl_trans.txt | tee -a  $LOG
+   rm ../data/gl_trans_by_gl.txt | tee -a  $LOG
+   rm ../data/gl_tran_by_block.txt | tee -a  $LOG
+   rm ../data/extract.out | tee -a  $LOG
+   rm ../logs/fee_conv.log | tee -a  $LOG
+   rm ../data/fee_conv.txt | tee -a  $LOG
+   rm ../logs/fee_ext.log | tee -a  $LOG
+   rm ../data/fees_sent_to_swx.txt | tee -a  $LOG
+   rm ../data/unk_gl_fees.txt | tee -a  $LOG
+   rm ../data/gl_total.txt | tee -a  $LOG
+   rm ../data/gl_extract.txt | tee -a  $LOG
+   rm ../data/glout.txt | tee -a  $LOG
+   rm ../data/daily_fee_charge.txt | tee -a $Log
+   rm ../data/daily_fee_charge_err.txt | tee -a $Log
+   rm ../data/daily_fee_split.txt | tee -a $Log
+
+################################################################
+## Begin swxgl script 
+   echo -e "\n $0 started at: `date`" | tee -a  $LOG
+   echo " using database $DBNAME" | tee -a $LOG
+################################################################
+while :
+do
+##################################################################
+## Begin logext.4gl 
+   echo -e "\n logext.4gl started at `date`"  | tee -a $LOG
+   fglgo logext $1 2>&1| tee -a $LOG
+   EC1=$?
+    
+   echo " logext.4gl ended at `date`"  | tee -a $LOG
+## End logext.4gl
+##################################################################
+
+##################################################################
+## Begin fee_conv.4gl
+   echo -e "\n fee_conv.4gl Began at `date`"  | tee -a $LOG
+ 
+   fglgo fee_conv $1 2>&1| tee -a $LOG
+   EC2=$?
+   if [ $EC2 -ne 0 ]; then
+    echo " fee_conv.4gl ABORTED"  | tee -a $LOG
+    echo " swxgl script ABORTED"  | tee -a $LOG
+    break
+   fi
+   echo " fee_conv.4gl Ended at `date`"  | tee -a $LOG
+## End fee_conv.4gl
+##################################################################
+
+##################################################################
+## Begin fee_ext.4gl
+   echo -e "\n fee_ext.4gl Began at `date`"  | tee -a $LOG
+ 
+   fglgo fee_ext $1 2>&1| tee -a $LOG
+   EC3=$?
+ 
+   echo " fee_ext.4gl Ended at `date`"  | tee -a $LOG
+## End fee_ext.4gl
+##################################################################
+
+##################################################################
+## Begin gl_extract.4gl 
+   echo -e "\n gl_extract.4gl Began at `date` "   | tee -a $LOG
+   
+   fglgo gl_extract $1 2>&1| tee -a $LOG 
+   EC4=$?
+   echo " gl_extract.4gl Ended at `date`"  | tee -a $LOG
+## End gl_extract.4gl   
+##################################################################
+
+##################################################################
+## Begin fee_split.4gl 
+   echo -e "\n fee_split.4gl Began at `date` "   | tee -a $LOG
+   
+   fglgo fee_split $1 2>&1 | tee -a $LOG 
+   EC5=$?
+   
+   echo " fee_split.4gl Ended at `date`"  | tee -a $LOG
+break
+## End fee_split.4gl   
+##################################################################
+done
+ EC99=$(($EC1+$EC2+$EC3+$EC4+$EC5))
+if [ $EC99 = 0 ]; then
+   echo -e "swxgl GOOD \n" | tee -a ${LOG}
+   PASSFAIL="GOOD"
+else
+   echo -e "swxgl FAILED \n" | tee -a ${LOG}
+   PASSFAIL="FAILED"
+fi
+   
+   echo -e "\n $0 ended at: `date`  "  | tee -a $LOG 
+    echo " swxgl script ended at: `date`  " | tee -a $LOG
+    # transfer files to report server
+    ../scripts/tfr-swxgl.sh
+EC=$?
+if [ $EC = 0 ]; then
+   echo -e "FTP GOOD \n" | tee -a ${LOG}
+   FTPFAIL="GOOD"
+else
+   echo -e "FTP FAILED \n" | tee -a ${LOG}
+   FTPFAIL="FAILED"
+fi
+  SUBJ="swxgl ${PASSFAIL} ftp ${FTPFAIL} `hostname`"
+  SUBJ="swxgl PROCESS LOG `hostname`"
+
+#   cat $LOG | awk 'sub("$", "\r")' | \
+   mail -s "${SUBJ}" ${NOTIFY} < ${LOG}
+## End swxgl script 
+##################################################################
+
+exit
